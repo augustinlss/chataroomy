@@ -40,6 +40,9 @@ func NewWebSocketConn(conn net.Conn) *WebSocketConn {
 	}
 }
 
+// first byte of a frame contains important information about it.
+// MSB is FIN, 4 LSB are the opcode. the remaining 3 bits are extension bits and are generally
+// 0 unless an extension is negotiated
 func (ws *WebSocketConn) ReadFrame() (*Frame, error) {
 	// TODO implemenet frame reading logic
 	// Read first byte
@@ -134,4 +137,10 @@ func (ws *WebSocketConn) ReadMessage() (opcode byte, data []byte, err error) {
 	}
 
 	return messageOpcode, message, nil
+}
+
+func (ws *WebSocketConn) Write() (*Frame, error) {
+	// TODO implement frame writing logic
+	// This is a placeholder for the actual implementation
+	return nil, fmt.Errorf("Write method not implemented")
 }
