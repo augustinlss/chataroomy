@@ -110,3 +110,28 @@ func (ws *WebSocketConn) ReadFrame() (*Frame, error) {
 	}, nil
 
 }
+
+func (ws *WebSocketConn) ReadMessage() (opcode byte, data []byte, err error) {
+	var message []byte
+	var messageOpcode byte
+
+	for {
+		frame, err := ws.ReadFrame()
+
+		if err != nil {
+			return 0, nil, err
+		}
+
+		if len(message) == 0 {
+			messageOpcode = frame.Opcode
+		}
+
+		message = append(message, frame.Payload...)
+
+		if frame.Fin {
+			break
+		}
+	}
+
+	return messageOpcode, message, nil
+}
