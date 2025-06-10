@@ -139,8 +139,6 @@ func (ws *WebSocketConn) ReadMessage() (opcode byte, data []byte, err error) {
 	return messageOpcode, message, nil
 }
 
-func (ws *WebSocketConn) Write() (*Frame, error) {
-	// TODO implement frame writing logic
-	// This is a placeholder for the actual implementation
-	return nil, fmt.Errorf("Write method not implemented")
+func (ws *WebSocketConn) Close() error {
+	return ws.conn.Close()
 }
