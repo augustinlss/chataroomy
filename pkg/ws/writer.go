@@ -8,6 +8,10 @@ func (ws *WebSocketConn) WriteFrame(frame *Frame) error {
 	// TODO implement frame writing logic
 	// This is a placeholder for the actual implementation
 
+	ws.writeMut.Lock()
+
+	var data []byte
+
 	return fmt.Errorf("Write method not implemented")
 }
 
