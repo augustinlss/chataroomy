@@ -44,8 +44,6 @@ func NewWebSocket(conn net.Conn) *WebSocket {
 // MSB is FIN, 4 LSB are the opcode. the remaining 3 bits are extension bits and are generally
 // 0 unless an extension is negotiated
 func (ws *WebSocket) ReadFrame() (*Frame, error) {
-	// TODO implemenet frame reading logic
-	// Read first byte
 	firstByte, err := ws.reader.ReadByte()
 
 	if err != nil {
