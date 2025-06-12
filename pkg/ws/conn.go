@@ -18,7 +18,7 @@ const (
 	OpcodePong         = 0xA
 )
 
-type WebSocketConn struct {
+type WebSocket struct {
 	conn     net.Conn
 	reader   *bufio.Reader
 	writer   *bufio.Writer
@@ -32,8 +32,8 @@ type Frame struct {
 	Payload []byte
 }
 
-func NewWebSocketConn(conn net.Conn) *WebSocketConn {
-	return &WebSocketConn{
+func NewWebSocket(conn net.Conn) *WebSocket {
+	return &WebSocket{
 		conn:   conn,
 		reader: bufio.NewReader(conn),
 		writer: bufio.NewWriter(conn),
@@ -43,7 +43,7 @@ func NewWebSocketConn(conn net.Conn) *WebSocketConn {
 // first byte of a frame contains important information about it.
 // MSB is FIN, 4 LSB are the opcode. the remaining 3 bits are extension bits and are generally
 // 0 unless an extension is negotiated
-func (ws *WebSocketConn) ReadFrame() (*Frame, error) {
+func (ws *WebSocket) ReadFrame() (*Frame, error) {
 	// TODO implemenet frame reading logic
 	// Read first byte
 	firstByte, err := ws.reader.ReadByte()
@@ -114,7 +114,7 @@ func (ws *WebSocketConn) ReadFrame() (*Frame, error) {
 
 }
 
-func (ws *WebSocketConn) ReadMessage() (opcode byte, data []byte, err error) {
+func (ws *WebSocket) ReadMessage() (opcode byte, data []byte, err error) {
 	var message []byte
 	var messageOpcode byte
 
@@ -139,6 +139,6 @@ func (ws *WebSocketConn) ReadMessage() (opcode byte, data []byte, err error) {
 	return messageOpcode, message, nil
 }
 
-func (ws *WebSocketConn) Close() error {
+func (ws *WebSocket) Close() error {
 	return ws.conn.Close()
 }
