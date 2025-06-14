@@ -4,18 +4,29 @@ import (
 	"fmt"
 )
 
-func (ws *WebSocketConn) WriteFrame(frame *Frame) error {
+func (ws *WebSocket) WriteFrame(frame *Frame) error {
 	// TODO implement frame writing logic
 	// This is a placeholder for the actual implementation
 
 	ws.writeMut.Lock()
+	defer ws.writeMut.Unlock()
 
-	var data []byte
+	if frame == nil {
+		return fmt.Errorf("frame cannot be nil")
+	}
+
+	if frame.Fin {
+		// handle final frame logic
+	}
+
+	if frame.Opcode < 0 || frame.Opcode > 15 {
+		return fmt.Errorf("invalid opcode: %d", frame.Opcode)
+	}
 
 	return fmt.Errorf("Write method not implemented")
 }
 
-func (ws *WebSocketConn) WriteMessage(opcode byte, data []byte) error {
+func (ws *WebSocket) WriteMessage(opcode byte, data []byte) error {
 	// for now we will send all messages in a single frame
 	// in the future, i should probably split messages into
 	// multiple framea
@@ -28,18 +39,18 @@ func (ws *WebSocketConn) WriteMessage(opcode byte, data []byte) error {
 	return ws.WriteFrame(frame)
 }
 
-func (ws *WebSocketConn) WriteText() error {
+func (ws *WebSocket) WriteText() error {
 
 }
 
-func (ws *WebSocketConn) WriteBinary() error {
+func (ws *WebSocket) WriteBinary() error {
 
 }
 
-func (ws *WebSocketConn) WritePing() error {
+func (ws *WebSocket) WritePing() error {
 
 }
 
-func (ws *WebSocketConn) WritePong() error {
+func (ws *WebSocket) WritePong() error {
 
 }
