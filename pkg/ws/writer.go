@@ -15,12 +15,14 @@ func (ws *WebSocket) WriteFrame(frame *Frame) error {
 		return fmt.Errorf("frame cannot be nil")
 	}
 
-	if frame.Fin {
-		// handle final frame logic
-	}
-
 	if frame.Opcode < 0 || frame.Opcode > 15 {
 		return fmt.Errorf("invalid opcode: %d", frame.Opcode)
+	}
+
+	firstByte := byte(frame.Opcode & 0x0F)
+
+	if frame.Fin {
+		firstByte |= 0x80
 	}
 
 	return fmt.Errorf("Write method not implemented")
