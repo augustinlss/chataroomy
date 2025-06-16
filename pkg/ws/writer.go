@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/binary"
 	"fmt"
 )
 
@@ -19,13 +20,61 @@ func (ws *WebSocket) WriteFrame(frame *Frame) error {
 		return fmt.Errorf("invalid opcode: %d", frame.Opcode)
 	}
 
+	var header []byte
 	firstByte := byte(frame.Opcode & 0x0F)
 
 	if frame.Fin {
 		firstByte |= 0x80
 	}
 
-	return fmt.Errorf("Write method not implemented")
+	header = append(header, firstByte)
+
+	payloadLen := len(frame.Payload)
+	secondByte := byte(0)
+	if frame.Masked {
+		secondByte |= 0x80
+	}
+
+	if payloadLen < 126 {
+		secondByte |= byte(payloadLen)
+		header = append(header, secondByte)
+	} else if payloadLen < 65536 {
+		secondByte |= 126
+		header = append(header, secondByte)
+		extLen := make([]byte, 2)
+		binary.BigEndian.PutUint16(extLen, uint16(payloadLen))
+		header = append(header, extLen...)
+	} else {
+		secondByte |= 127
+		header = append(header, secondByte)
+		extLen := make([]byte, 8)
+		binary.BigEndian.PutUint64(extLen, uint64(payloadLen))
+		header = append(header, extLen...)
+	}
+
+	if frame.Masked {
+		header = append(header, frame.MaskKey[:]...)
+	}
+
+	if _, err := ws.conn.Write(header); err != nil {
+		return fmt.Errorf("failed to write frame header: %w", err)
+	}
+
+	if len(frame.Payload) > 0 {
+		payload := frame.Payload
+		if frame.Masked {
+			payload = make([]byte, len(frame.Payload))
+			for i, b := range frame.Payload {
+				payload[i] = b ^ frame.MaskKey[i%4]
+			}
+		}
+
+		if _, err := ws.conn.Write(payload); err != nil {
+			return fmt.Errorf("failed to write frame payload: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (ws *WebSocket) WriteMessage(opcode byte, data []byte) error {

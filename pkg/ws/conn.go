@@ -29,6 +29,7 @@ type Frame struct {
 	Fin     bool
 	Opcode  byte
 	Masked  bool
+	MaskKey [4]byte
 	Payload []byte
 }
 
