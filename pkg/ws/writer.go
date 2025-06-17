@@ -80,7 +80,7 @@ func (ws *WebSocket) WriteFrame(frame *Frame) error {
 func (ws *WebSocket) WriteMessage(opcode byte, data []byte) error {
 	// for now we will send all messages in a single frame
 	// in the future, i should probably split messages into
-	// multiple framea
+	// multiple frames
 	frame := &Frame{
 		Fin:     true,
 		Opcode:  opcode,
