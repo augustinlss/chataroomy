@@ -23,6 +23,7 @@ type WebSocket struct {
 	reader   *bufio.Reader
 	writer   *bufio.Writer
 	writeMut sync.Mutex
+	isClient bool
 }
 
 type Frame struct {
@@ -31,6 +32,14 @@ type Frame struct {
 	Masked  bool
 	MaskKey [4]byte
 	Payload []byte
+}
+
+func (ws *WebSocket) isClientConn() bool {
+	return ws.isClient
+}
+
+func (ws *WebSocket) isServerConn() bool {
+	return !ws.isClient
 }
 
 func NewWebSocket(conn net.Conn) *WebSocket {

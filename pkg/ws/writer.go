@@ -85,7 +85,7 @@ func (ws *WebSocket) WriteMessage(opcode byte, data []byte) error {
 		Fin:     true,
 		Opcode:  opcode,
 		Payload: data,
-		Masked:  false,
+		Masked:  ws.isServerConn(),
 	}
 	return ws.WriteFrame(frame)
 }
