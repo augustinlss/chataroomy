@@ -78,14 +78,23 @@ func (ws *WebSocket) WriteFrame(frame *Frame) error {
 }
 
 func (ws *WebSocket) WriteMessage(opcode byte, data []byte) error {
-	// for now we will send all messages in a single frame
+	// for now will send all messages in a single frame
 	// in the future, i should probably split messages into
 	// multiple frames
+
+	masked := ws.isClientConn()
+	var maskKey [4]byte
+	if masked {
+		// Generate a masking key if this is a client connection
+		maskKey = [4]byte{0x11, 0x22, 0x33, 0x44} // Placeholder: Replace with actual random
+	}
+
 	frame := &Frame{
 		Fin:     true,
 		Opcode:  opcode,
 		Payload: data,
-		Masked:  ws.isServerConn(),
+		Masked:  masked,
+		MaskKey: maskKey,
 	}
 	return ws.WriteFrame(frame)
 }
