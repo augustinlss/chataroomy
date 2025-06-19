@@ -107,7 +107,26 @@ func (ws *WebSocket) WriteBinary() error {
 
 }
 
-func (ws *WebSocket) WritePing() error {
+func (ws *WebSocket) WritePing(data []byte) error {
+	if len(data) > 125 {
+		return fmt.Errorf("ping payload cannot exceed 125 bytes")
+	}
+
+	masked := ws.isClientConn()
+	var maskKey [4]byte
+	if masked {
+		maskKey = [4]byte{0x11, 0x22, 0x33, 0x44} // Placeholder: Replace with actual random
+	}
+
+	frame := &Frame{
+		Fin:     true,
+		Opcode:  OpcodePing,
+		Payload: data,
+		Masked:  masked,
+		MaskKey: maskKey,
+	}
+
+	return ws.WriteFrame(frame)
 
 }
 
