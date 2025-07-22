@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -15,14 +17,33 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+var rooms = make(map[string]*Room)
+var roomsLock sync.Mutex
+
 type Room struct {
+	clients  map[*Client]bool
 	roomID   string
 	roomName string
 }
 
-func handleCreateRoom(w http.ResponseWriter, r http.Request) {
-	//roomID :=
+type Client struct {
+	conn *websocket.Conn
+	send chan []byte
+}
 
+func handleCreateRoom(w http.ResponseWriter) (bool, error) {
+	roomID, err := GenerateRandomToken(32)
+
+	if err != nil {
+		return false, err
+	}
+
+	roomsLock.Lock()
+	rooms[roomID] = &Room{clients: make(map[*Client]bool)}
+	roomsLock.Unlock()
+
+	w.Write([]byte(roomID))
+	return true, nil
 }
 
 func GenerateRandomToken(byteLength int) (string, error) {
@@ -30,7 +51,7 @@ func GenerateRandomToken(byteLength int) (string, error) {
 	_, err := rand.Read(b)
 
 	if err != nil {
-		fmt.Errorf("failed to read random bytes: %w", err)
+		log.Printf("failed to read random bytes: %w", err)
 		return "", err
 	}
 
