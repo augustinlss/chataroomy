@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 )
