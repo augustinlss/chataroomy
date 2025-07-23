@@ -1,22 +1,9 @@
-package main
+package pkg
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"log"
-	"net/http"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true // return true for now, maybe ill do cors later.
-	},
-}
 
 var rooms = make(map[string]*Room)
 var roomsLock sync.RWMutex
@@ -30,9 +17,18 @@ type Room struct {
 	unregister chan *Client
 }
 
-type Client struct {
-	conn *websocket.Conn
-	send chan []byte
+func NewRoom(roomID string, roomName string) *Room {
+	room := &Room{
+		clients:    make(map[*Client]bool),
+		roomID:     roomID,
+		roomName:   roomName,
+		broadcast:  make(chan []byte),
+		register:   make(chan *Client),
+		unregister: make(chan *Client),
+	}
+
+	go room.run()
+	return room
 }
 
 // so this function will be run as a goroutine,
@@ -76,30 +72,4 @@ func (r *Room) run() {
 		}
 
 	}
-}
-
-func handleCreateRoom(w http.ResponseWriter) (bool, error) {
-	roomID, err := GenerateRandomToken(32)
-
-	if err != nil {
-		return false, err
-	}
-
-	roomsLock.Lock()
-	rooms[roomID] = &Room{clients: make(map[*Client]bool), roomID: "123", roomName: "name"}
-	roomsLock.Unlock()
-
-	w.Write([]byte(roomID))
-	return true, nil
-}
-
-func GenerateRandomToken(byteLength int) (string, error) {
-	b := make([]byte, byteLength)
-	_, err := rand.Read(b)
-
-	if err != nil {
-		return "", err
-	}
-
-	return base64.RawURLEncoding.EncodeToString(b), nil
 }
