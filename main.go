@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -12,23 +11,45 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		return true // return true for now, maybe ill do cors later.
 	},
 }
 
 var rooms = make(map[string]*Room)
-var roomsLock sync.Mutex
+var roomsLock sync.RWMutex
 
 type Room struct {
-	clients  map[*Client]bool
-	roomID   string
-	roomName string
+	clients    map[*Client]bool
+	roomID     string
+	roomName   string
+	broadcast  chan []byte
+	register   chan *Client
+	unregister chan *Client
 }
 
 type Client struct {
 	conn *websocket.Conn
 	send chan []byte
+}
+
+func (r *Room) run() {
+	for {
+		select {
+		case client := <-r.register:
+			r.clients[client] = true
+			log.Printf("Client registered in room %s. Total clients %d", r.roomID, len(r.clients))
+
+		case client := <-r.unregister:
+			if _, ok := r.clients[client]; ok {
+				delete(r.clients, client)
+				close(client.send)
+			}
+		}
+
+	}
 }
 
 func handleCreateRoom(w http.ResponseWriter) (bool, error) {
@@ -39,7 +60,7 @@ func handleCreateRoom(w http.ResponseWriter) (bool, error) {
 	}
 
 	roomsLock.Lock()
-	rooms[roomID] = &Room{clients: make(map[*Client]bool)}
+	rooms[roomID] = &Room{clients: make(map[*Client]bool), roomID: "123", roomName: "name"}
 	roomsLock.Unlock()
 
 	w.Write([]byte(roomID))
@@ -51,7 +72,6 @@ func GenerateRandomToken(byteLength int) (string, error) {
 	_, err := rand.Read(b)
 
 	if err != nil {
-		log.Printf("failed to read random bytes: %w", err)
 		return "", err
 	}
 
