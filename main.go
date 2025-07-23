@@ -35,6 +35,8 @@ type Client struct {
 	send chan []byte
 }
 
+// so this function will be run as a goroutine,
+// allowing us to spin up multiple rooms concurrently.
 func (r *Room) run() {
 	for {
 		select {
@@ -46,6 +48,30 @@ func (r *Room) run() {
 			if _, ok := r.clients[client]; ok {
 				delete(r.clients, client)
 				close(client.send)
+
+				log.Printf("Client unregistered successfully from room %s", r.roomID)
+
+				if len(r.clients) == 0 {
+					log.Printf("Room %s is empty. Closing room...", r.roomID)
+
+					close(r.broadcast)
+
+					roomsLock.Lock()
+					delete(rooms, r.roomID)
+					roomsLock.Unlock()
+					return // end the goroutine for this room
+				}
+			}
+
+		case message := <-r.broadcast:
+			for client := range r.clients {
+				select {
+				case client.send <- message:
+				default:
+					close(client.send)
+					delete(r.clients, client)
+					log.Printf("Failed to send message to client, unregistering client...")
+				}
 			}
 		}
 
