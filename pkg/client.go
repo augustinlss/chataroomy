@@ -57,6 +57,9 @@ func (c *Client) writePump() {
 				return
 			}
 			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+
+			// write ping to websocket connection to keep alive. this is just some
+			// basic ws stuff bro, pff do you even code?
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				c.isClosed = true
 				c.mu.Lock()
@@ -66,5 +69,9 @@ func (c *Client) writePump() {
 			c.mu.Unlock()
 		}
 	}
+
+}
+
+func (c *Client) readPump() {
 
 }
